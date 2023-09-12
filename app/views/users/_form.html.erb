@@ -23,7 +23,7 @@
 
   <div>
     <%= form.label :kind, style: "display: block" %>
-    <%= form.select :kind, User.kinds.keys.map{ |key| [key.humanize, key] } %>
+    <%= form.select :kind, User.kinds.map{ |key, value| [key.humanize, value] } %>
   </div>
 
   <div>

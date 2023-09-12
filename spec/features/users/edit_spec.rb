@@ -10,7 +10,9 @@ RSpec.feature 'Show Users' do
   let!(:teacher_1) { User.create(kind: 1, name: 'Teacher 1', age: 50) }
   let!(:teacher_2) { User.create(kind: 1, name: 'Teacher 2', age: 60) }
   let!(:teacher_3) { User.create(kind: 1, name: 'Teacher 3', age: 60) }
+  let!(:teacher_4) { User.create(kind: 1, name: 'Teacher 4', age: 55) }
   let!(:teacher_student) { User.create(kind: 2, name: 'Student and Teacher', age: 40) }
+  let!(:teacher_student_1) { User.create(kind: 2, name: 'Student and Teacher 1', age: 35) }
   let!(:program_1) { Program.create(name: 'AI is going to destroy the world') }
   let!(:program_2) { Program.create(name: 'Wall Street for dummies') }
   let!(:program_3) { Program.create(name: 'How to be a millionaire') }
@@ -27,15 +29,17 @@ RSpec.feature 'Show Users' do
   let!(:enrollment_6) { Enrollment.create(user: user_1, teacher: teacher_2, program: program_3) }
   let!(:enrollment_7) { Enrollment.create(user: user_2, teacher: teacher_2, program: program_3) }
   let!(:enrollment_8) { Enrollment.create(user: user_3, teacher: teacher_2, program: program_3) }
+  let!(:enrollment_9) { Enrollment.create(user: user_3, teacher: teacher_student, program: program_4) }
+  let!(:enrollment_10) { Enrollment.create(user: teacher_student, teacher: teacher_4, program: program_4) }
 
   feature 'Validation errors' do
     context 'kind related errors' do
       scenario 'when a teacher wants to be set a student' do
         visit edit_user_path(teacher_1)
-  
+
         select('Student', from: "user_kind")
         click_on 'Update User'
-  
+
         expect(page).to have_text(
           "Kind can not be student because is teaching in at least one program"
         )
@@ -44,14 +48,36 @@ RSpec.feature 'Show Users' do
 
       scenario 'when a student wants to be set as a teacher' do
         visit edit_user_path(user_1)
-  
+
         select('Teacher', from: "user_kind")
         click_on 'Update User'
-  
+
         expect(page).to have_text(
           "Kind can not be teacher because is studying in at least one program"
         )
         expect(user_1.reload).to be_student
+      end
+
+      scenario 'when a student_teacher wants to be set as a teacher' do
+        visit edit_user_path(teacher_student)
+
+        select('Teacher', from: "user_kind")
+        click_on 'Update User'
+        expect(page).to have_text(
+          "Kind can not be student/teacher because is teaching/studying in at least one program"
+        )
+        expect(teacher_student.reload).to be_student_teacher
+      end
+
+      scenario 'when a student_teacher wants to be set a student' do
+        visit edit_user_path(teacher_student)
+
+        select('Student', from: "user_kind")
+        click_on 'Update User'
+        expect(page).to have_text(
+          "Kind can not be student/teacher because is teaching/studying in at least one program"
+        )
+        expect(teacher_student.reload).to be_student_teacher
       end
     end
   end
@@ -79,6 +105,30 @@ RSpec.feature 'Show Users' do
         "Kind can not be teacher because is studying in at least one program"
       )
       expect(user_4.reload).to be_teacher
+    end
+
+    scenario 'when a student_teacher wants to be set a student' do
+      visit edit_user_path(teacher_student_1)
+
+      select('Student', from: "user_kind")
+      click_on 'Update User'
+
+      expect(page).not_to have_text(
+        "Kind can not be student/teacher because is teaching/studying in at least one program"
+      )
+      expect(teacher_student_1.reload).to be_student
+    end
+
+    scenario 'when a student_teacher wants to be set as a teacher' do
+      visit edit_user_path(teacher_student_1)
+
+      select('Teacher', from: "user_kind")
+      click_on 'Update User'
+
+      expect(page).not_to have_text(
+        "Kind can not be student/teacher because is teaching/studying in at least one program"
+      )
+      expect(teacher_student_1.reload).to be_teacher
     end
   end
 end
